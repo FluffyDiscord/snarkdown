@@ -231,6 +231,15 @@ describe('snarkdown()', () => {
 			expect(snarkdown('| a | b |\n| - | - |\n| 1 | 2 |\nx | y')).to.contain('<td>x</td><td>y</td>');
 		});
 
+		it('renders extra cells in a ragged row without a bogus attribute', () => {
+			expect(snarkdown('| a | b |\n| - | - |\n| 1 | 2 | 3 |')).to.equal(
+				'<table><thead><tr><th>a</th><th>b</th></tr></thead><tbody><tr><td>1</td><td>2</td><td>3</td></tr></tbody></table>'
+			);
+			expect(snarkdown('| a | b | c |\n| - | - |\n| 1 | 2 |')).to.equal(
+				'<table><thead><tr><th>a</th><th>b</th><th>c</th></tr></thead><tbody><tr><td>1</td><td>2</td></tr></tbody></table>'
+			);
+		});
+
 		it('parses a table between paragraphs', () => {
 			const out = snarkdown('Intro para\n\n| a | b |\n| - | - |\n| 1 | 2 |\n\nOutro para');
 			expect(out).to.contain('Intro para');
