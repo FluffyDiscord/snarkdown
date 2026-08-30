@@ -4,13 +4,13 @@
   "version": "2.0.0",
   "main": "./dist/snarkdown.js",
   "module": "./dist/snarkdown.es.js",
-  "modern": "./dist/snarkdown.modern.js",
+  "modern": "./dist/snarkdown.es.js",
   "umd:main": "./dist/snarkdown.umd.js",
   "unpkg": "./dist/snarkdown.umd.js",
   "types": "./snarkdown.d.ts",
   "scripts": {
-    "build": "microbundle",
-    "dev": "microbundle watch",
+    "build": "node build.mjs",
+    "dev": "rolldown src/index.js --format esm --file dist/snarkdown.es.js --minify --watch",
     "test": "eslint src test && NODE_ENV=test mocha --compilers @babel/register",
     "prepublish": "npm run -s build",
     "release": "npm run -s build && npm test && git commit -am $npm_package_version && git tag $npm_package_version && git push && git push --tags && npm publish"
@@ -39,9 +39,9 @@
     "chai": "^3.5.0",
     "eslint": "^7.7.0",
     "eslint-config-developit": "^1.2.0",
-    "microbundle": "^0.12.0",
     "mocha": "^5.1.1",
-    "npm-merge-driver-install": "^1.1.1"
+    "npm-merge-driver-install": "^1.1.1",
+    "rolldown": "^1.2.6"
   },
   "eslintConfig": {
     "extends": "developit",
