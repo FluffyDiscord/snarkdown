@@ -22,9 +22,16 @@ function encodeAttr(str) {
 	return (str+'').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+/** Split one table row into trimmed cell strings, dropping optional outer pipes.
+ *	@private
+ */
+function rowCells(row) {
+	return row.trim().replace(/^\||\|$/g, '').split('|').map(c => c.trim());
+}
+
 /** Parse Markdown into an HTML String. */
 export default function parse(md, prevLinks) {
-	let tokenizer = /((?:^|\n+)(?:\n---+|\* \*(?: \*)+)\n)|(?:^``` *(\w*)\n([\s\S]*?)\n```$)|((?:(?:^|\n+)(?:\t|  {2,}).+)+\n*)|((?:(?:^|\n)([>*+-]|\d+\.)\s+.*)+)|(?:!\[([^\]]*?)\]\(([^)]+?)\))|(\[)|(\](?:\(([^)]+?)\))?)|(?:(?:^|\n+)([^\s].*)\n(-{3,}|={3,})(?:\n+|$))|(?:(?:^|\n+)(#{1,6})\s*(.+)(?:\n+|$))|(?:`([^`].*?)`)|(  \n\n*|\n{2,}|__|\*\*|[_*]|~~)/gm,
+	let tokenizer = /((?:^|\n+)(?:\n---+|\* \*(?: \*)+)\n)|(?:^``` *(\w*)\n([\s\S]*?)\n```$)|((?:(?:^|\n+)(?:\t|  {2,}).+)+\n*)|((?:(?:^|\n)([>*+-]|\d+\.)\s+.*)+)|(?:!\[([^\]]*?)\]\(([^)]+?)\))|(\[)|(\](?:\(([^)]+?)\))?)|(?:(?:^|\n+)([^\s].*)\n(-{3,}|={3,})(?:\n+|$))|(?:(?:^|\n+)(#{1,6})\s*(.+)(?:\n+|$))|(?:`([^`].*?)`)|(  \n\n*|\n{2,}|__|\*\*|[_*]|~~)|(?:^|\n+)((?:[^\n|]*\|[^\n]*)\n)(\|?[ \t]*:?-+:?[ \t]*(?:\|[ \t]*:?-+:?[ \t]*)*\|?)(?:\n|$)((?:[^\n]*\|[^\n]*(?:\n|$))*)/gm,
 		context = [],
 		out = '',
 		links = prevLinks || {},
@@ -47,7 +54,7 @@ export default function parse(md, prevLinks) {
 		return str;
 	}
 
-	md = md.replace(/^\[(.+?)\]:\s*(.+)$/gm, (s, name, url) => {
+	md = md.replace(/\r\n?/g, '\n').replace(/^\[(.+?)\]:\s*(.+)$/gm, (s, name, url) => {
 		links[name.toLowerCase()] = url;
 		return '';
 	}).replace(/^\n+|\n+$/g, '');
@@ -100,6 +107,14 @@ export default function parse(md, prevLinks) {
 		// Inline formatting: *em*, **strong** & friends
 		else if (token[17] || token[1]) {
 			chunk = tag(token[17] || '--');
+		}
+		// Tables:
+		else if (token[18]) {
+			let align = rowCells(token[19]).map(c => c[0]==':' ? (c[c.length-1]==':' ? 'center' : 'left') : (c[c.length-1]==':' ? 'right' : ''));
+			let cell = (text, name, i) => '<'+name+(align[i]?` align="${align[i]}"`:'')+'>'+parse(text, links)+'</'+name+'>';
+			let rowHtml = (line, name) => '<tr>'+rowCells(line).map((c, i) => cell(c, name, i)).join('')+'</tr>';
+			let body = token[20].replace(/\n+$/, '').split('\n').filter(Boolean).map(line => rowHtml(line, 'td')).join('');
+			chunk = '<table><thead>'+rowHtml(token[18], 'th')+'</thead><tbody>'+body+'</tbody></table>';
 		}
 		out += prev;
 		out += chunk;

@@ -167,4 +167,75 @@ describe('snarkdown()', () => {
 			expect(snarkdown('`')).to.equal('`');
 		});
 	});
+
+	describe('tables', () => {
+		it('parses a basic pipe table', () => {
+			expect(snarkdown('| a | b |\n| - | - |\n| 1 | 2 |')).to.equal(
+				'<table><thead><tr><th>a</th><th>b</th></tr></thead><tbody><tr><td>1</td><td>2</td></tr></tbody></table>'
+			);
+		});
+
+		it('parses a table without outer pipes', () => {
+			expect(snarkdown('a | b\n- | -\nc | d')).to.equal(
+				'<table><thead><tr><th>a</th><th>b</th></tr></thead><tbody><tr><td>c</td><td>d</td></tr></tbody></table>'
+			);
+		});
+
+		it('parses column alignment from the delimiter row', () => {
+			expect(snarkdown('| L | C | R |\n|:-|:-:|-:|\n| 1 | 2 | 3 |')).to.equal(
+				'<table><thead><tr><th align="left">L</th><th align="center">C</th><th align="right">R</th></tr></thead>' +
+				'<tbody><tr><td align="left">1</td><td align="center">2</td><td align="right">3</td></tr></tbody></table>'
+			);
+		});
+
+		it('parses inline formatting inside cells', () => {
+			expect(snarkdown('| **b** | [x](/y) |\n| - | - |\n| a | b |')).to.equal(
+				'<table><thead><tr><th><strong>b</strong></th><th><a href="/y">x</a></th></tr></thead>' +
+				'<tbody><tr><td>a</td><td>b</td></tr></tbody></table>'
+			);
+		});
+
+		it('parses a single-column header-only table', () => {
+			expect(snarkdown('| h |\n| - |')).to.equal(
+				'<table><thead><tr><th>h</th></tr></thead><tbody></tbody></table>'
+			);
+		});
+
+		it('normalises CRLF line endings', () => {
+			expect(snarkdown('| a | b |\r\n| - | - |\r\n| 1 | 2 |')).to.equal(
+				'<table><thead><tr><th>a</th><th>b</th></tr></thead><tbody><tr><td>1</td><td>2</td></tr></tbody></table>'
+			);
+		});
+
+		it('does not treat a lone pipe line as a table', () => {
+			expect(snarkdown('a | b')).to.equal('a | b');
+		});
+
+		it('does not treat piped prose without a delimiter as a table', () => {
+			expect(snarkdown('use a | b pipe\nnext line')).to.not.contain('<table');
+		});
+
+		it('ends the table at a blank line', () => {
+			const out = snarkdown('| a | b |\n| - | - |\n| 1 | 2 |\n\nSee x | y here');
+			expect(out).to.not.contain('<td>See x</td>');
+			expect(out).to.contain('See x | y here');
+		});
+
+		it('ends the table at a line without a pipe', () => {
+			const out = snarkdown('| a | b |\n| - | - |\n| 1 | 2 |\nplain text');
+			expect(out).to.not.contain('<td>plain text');
+			expect(out).to.contain('plain text');
+		});
+
+		it('continues the table across consecutive pipe lines (GFM)', () => {
+			expect(snarkdown('| a | b |\n| - | - |\n| 1 | 2 |\nx | y')).to.contain('<td>x</td><td>y</td>');
+		});
+
+		it('parses a table between paragraphs', () => {
+			const out = snarkdown('Intro para\n\n| a | b |\n| - | - |\n| 1 | 2 |\n\nOutro para');
+			expect(out).to.contain('Intro para');
+			expect(out).to.contain('<table>');
+			expect(out).to.contain('Outro para');
+		});
+	});
 });
