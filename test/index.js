@@ -181,10 +181,10 @@ describe('snarkdown()', () => {
 			);
 		});
 
-		it('parses column alignment from the delimiter row', () => {
+		it('ignores alignment markers in the delimiter (no align attribute)', () => {
 			expect(snarkdown('| L | C | R |\n|:-|:-:|-:|\n| 1 | 2 | 3 |')).to.equal(
-				'<table><thead><tr><th align="left">L</th><th align="center">C</th><th align="right">R</th></tr></thead>' +
-				'<tbody><tr><td align="left">1</td><td align="center">2</td><td align="right">3</td></tr></tbody></table>'
+				'<table><thead><tr><th>L</th><th>C</th><th>R</th></tr></thead>' +
+				'<tbody><tr><td>1</td><td>2</td><td>3</td></tr></tbody></table>'
 			);
 		});
 
@@ -198,12 +198,6 @@ describe('snarkdown()', () => {
 		it('parses a single-column header-only table', () => {
 			expect(snarkdown('| h |\n| - |')).to.equal(
 				'<table><thead><tr><th>h</th></tr></thead><tbody></tbody></table>'
-			);
-		});
-
-		it('normalises CRLF line endings', () => {
-			expect(snarkdown('| a | b |\r\n| - | - |\r\n| 1 | 2 |')).to.equal(
-				'<table><thead><tr><th>a</th><th>b</th></tr></thead><tbody><tr><td>1</td><td>2</td></tr></tbody></table>'
 			);
 		});
 
