@@ -1,7 +1,7 @@
 {
-  "name": "snarkdown",
+  "name": "@fluffydiscord/snarkdown",
   "description": "Transform Markdown into HTML.",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "main": "./dist/snarkdown.js",
   "module": "./dist/snarkdown.es.js",
   "modern": "./dist/snarkdown.es.js",
@@ -12,7 +12,7 @@
     "build": "node build.mjs",
     "dev": "rolldown src/index.js --format esm --file dist/snarkdown.es.js --minify --watch",
     "test": "eslint src test && NODE_ENV=test mocha --compilers @babel/register",
-    "prepublish": "npm run -s build",
+    "prepublishOnly": "npm run -s build",
     "release": "npm run -s build && npm test && git commit -am $npm_package_version && git tag $npm_package_version && git push && git push --tags && npm publish"
   },
   "authors": [
@@ -23,9 +23,12 @@
     "dist",
     "snarkdown.d.ts"
   ],
-  "homepage": "https://github.com/developit/snarkdown",
-  "repository": "developit/snarkdown",
+  "homepage": "https://github.com/FluffyDiscord/snarkdown",
+  "repository": "FluffyDiscord/snarkdown",
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "keywords": [
     "markdown",
     "gfm",

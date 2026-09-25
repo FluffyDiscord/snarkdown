@@ -70,6 +70,37 @@ describe('snarkdown()', () => {
 		it('parses reference links without creating excessive linebreaks', () => {
 			expect(snarkdown('\nhello [World]!\n\n[world]: http://world.com')).to.equal('hello <a href="http://world.com">World</a>!');
 		});
+
+		it('links a bare URL', () => {
+			expect(snarkdown('see https://example.com/a_b?x=1&y=2 now')).to.equal('see <a href="https://example.com/a_b?x=1&y=2">https://example.com/a_b?x=1&y=2</a> now');
+		});
+
+		it('leaves trailing punctuation out of a bare URL', () => {
+			expect(snarkdown('Go to https://example.com/page.')).to.equal('Go to <a href="https://example.com/page">https://example.com/page</a>.');
+			expect(snarkdown('(https://example.com)')).to.equal('(<a href="https://example.com">https://example.com</a>)');
+		});
+
+		it('keeps raw brackets inside a bare URL', () => {
+			expect(snarkdown('https://example.com/?p[0]=1&p[1]=2 ok')).to.equal('<a href="https://example.com/?p[0]=1&p[1]=2">https://example.com/?p[0]=1&p[1]=2</a> ok');
+		});
+
+		it('ends a bare URL at an escaped quote or angle bracket', () => {
+			expect(snarkdown('&quot;https://example.com&quot;')).to.equal('&quot;<a href="https://example.com">https://example.com</a>&quot;');
+			expect(snarkdown('https://example.com&lt;b')).to.equal('<a href="https://example.com">https://example.com</a>&lt;b');
+		});
+
+		it('links a bare URL inside a list item', () => {
+			expect(snarkdown('- https://example.com')).to.equal('<ul><li><a href="https://example.com">https://example.com</a></li></ul>');
+		});
+
+		it('does not link a URL that is already a link', () => {
+			expect(snarkdown('[https://example.com](https://example.com)')).to.equal('<a href="https://example.com">https://example.com</a>');
+			expect(snarkdown('[docs](https://example.com/a_b)')).to.equal('<a href="https://example.com/a_b">docs</a>');
+		});
+
+		it('does not link a URL glued to a word', () => {
+			expect(snarkdown('xhttps://example.com')).to.equal('xhttps://example.com');
+		});
 	});
 
 	describe('lists', () => {
@@ -94,11 +125,43 @@ describe('snarkdown()', () => {
 		});
 	});
 
-	describe('line breaks', () => {
-		it('parses two new lines as line breaks', () => {
-			expect(snarkdown('Something with\n\na line break')).to.equal('Something with<br />a line break');
+	describe('paragraphs', () => {
+		it('splits blank-line separated text into paragraphs', () => {
+			expect(snarkdown('First *one*\n\nSecond one')).to.equal('<p>First <em>one</em></p><p>Second one</p>');
 		});
 
+		it('keeps a single paragraph unwrapped', () => {
+			expect(snarkdown('Just one\nparagraph')).to.equal('Just one\nparagraph');
+		});
+
+		it('wraps text around a list in paragraphs without a stray break', () => {
+			expect(snarkdown('Intro:\n\n- One\n- Two\n\nOutro')).to.equal('<p>Intro:</p><ul><li>One</li><li>Two</li></ul><p>Outro</p>');
+			expect(snarkdown('Intro:\n- One\nOutro')).to.equal('<p>Intro:</p><ul><li>One</li></ul><p>Outro</p>');
+		});
+
+		it('closes emphasis at the end of its paragraph', () => {
+			expect(snarkdown('**open\n\nnext')).to.equal('<p><strong>open</strong></p><p>next</p>');
+		});
+
+		it('treats a whitespace-only line as a blank line', () => {
+			expect(snarkdown('a\n \nb')).to.equal('<p>a</p><p>b</p>');
+			expect(snarkdown('a\n\n \n\nb')).to.equal('<p>a</p><p>b</p>');
+		});
+
+		it('breaks the paragraph after a line ending in two spaces', () => {
+			expect(snarkdown('a  \n\nb')).to.equal('<p>a</p><p>b</p>');
+		});
+
+		it('keeps paragraphs when mapped over an array', () => {
+			expect(['a\n\nb'].map(snarkdown)).to.deep.equal(['<p>a</p><p>b</p>']);
+		});
+
+		it('does not wrap list items or headings in paragraphs', () => {
+			expect(snarkdown('# Title\n\n- a\n- b')).to.equal('<h1>Title</h1><ul><li>a</li><li>b</li></ul>');
+		});
+	});
+
+	describe('line breaks', () => {
 		it('parses two spaces as a line break', () => {
 			expect(snarkdown('Something with  \na line break')).to.equal('Something with<br />a line break');
 		});
@@ -133,21 +196,21 @@ describe('snarkdown()', () => {
 		});
 
 		it('parses lists within block quotes', () => {
-			expect(snarkdown('> - one\n> - two\n> - **three**\nhello')).to.equal('<blockquote><ul><li>one</li><li>two</li><li><strong>three</strong></li></ul></blockquote>\nhello');
+			expect(snarkdown('> - one\n> - two\n> - **three**\nhello')).to.equal('<blockquote><ul><li>one</li><li>two</li><li><strong>three</strong></li></ul></blockquote><p>hello</p>');
 		});
 	});
 
 	describe('horizontal rules', () => {
 		it('should parse ---', () => {
-			expect(snarkdown('foo\n\n---\nbar')).to.equal('foo<hr />bar');
-			expect(snarkdown('foo\n\n----\nbar'), '----').to.equal('foo<hr />bar');
-			expect(snarkdown('> foo\n\n---\nbar')).to.equal('<blockquote>foo</blockquote><hr />bar');
+			expect(snarkdown('foo\n\n---\nbar')).to.equal('<p>foo</p><hr /><p>bar</p>');
+			expect(snarkdown('foo\n\n----\nbar'), '----').to.equal('<p>foo</p><hr /><p>bar</p>');
+			expect(snarkdown('> foo\n\n---\nbar')).to.equal('<blockquote>foo</blockquote><hr /><p>bar</p>');
 		});
 
 		it('should parse * * *', () => {
-			expect(snarkdown('foo\n* * *\nbar')).to.equal('foo<hr />bar');
-			expect(snarkdown('foo\n* * * *\nbar'), '* * * *').to.equal('foo<hr />bar');
-			expect(snarkdown('> foo\n\n* * *\nbar')).to.equal('<blockquote>foo</blockquote><hr />bar');
+			expect(snarkdown('foo\n* * *\nbar')).to.equal('<p>foo</p><hr /><p>bar</p>');
+			expect(snarkdown('foo\n* * * *\nbar'), '* * * *').to.equal('<p>foo</p><hr /><p>bar</p>');
+			expect(snarkdown('> foo\n\n* * *\nbar')).to.equal('<blockquote>foo</blockquote><hr /><p>bar</p>');
 		});
 	});
 
