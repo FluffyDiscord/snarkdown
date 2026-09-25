@@ -1,5 +1,5 @@
 {
-  "name": "@fluffydiscord/snarkdown",
+  "name": "@flyffydiscord2/snarkdown",
   "description": "Transform Markdown into HTML.",
   "version": "3.0.0",
   "main": "./dist/snarkdown.js",

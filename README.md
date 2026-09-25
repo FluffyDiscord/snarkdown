@@ -3,8 +3,8 @@
 </p>
 <h1 align="center">
   Snarkdown
-  <a href="https://www.npmjs.org/package/@fluffydiscord/snarkdown">
-    <img src="https://img.shields.io/npm/v/@fluffydiscord/snarkdown.svg?style=flat" alt="npm">
+  <a href="https://www.npmjs.org/package/@flyffydiscord2/snarkdown">
+    <img src="https://img.shields.io/npm/v/@flyffydiscord2/snarkdown.svg?style=flat" alt="npm">
   </a>
 </h1>
 
@@ -33,10 +33,10 @@ It's designed to be as minimal as possible, for constrained use-cases where a fu
 
 Snarkdown exports a single function, which parses a string of Markdown and returns a String of HTML. Couldn't be simpler.
 
-The snarkdown module is available in [every module format](https://unpkg.com/@fluffydiscord/snarkdown/dist/) you'd ever need: ES Modules, CommonJS, UMD...
+The snarkdown module is available in [every module format](https://unpkg.com/@flyffydiscord2/snarkdown/dist/) you'd ever need: ES Modules, CommonJS, UMD...
 
 ```js
-import snarkdown from '@fluffydiscord/snarkdown';
+import snarkdown from '@flyffydiscord2/snarkdown';
 
 let md = '_this_ is **easy** to `use`.';
 let html = snarkdown(md);
